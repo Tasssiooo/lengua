@@ -1,3 +1,7 @@
+import sys
+
+from anki.collection import Collection
+
 # Objectives:
 # - Handle collections
 # - Handle creation of decks
@@ -7,7 +11,12 @@
 
 # Path -> Collection
 # Get a Path to a anki2 file and returns a Collection.
-def get_collection(path): ...
+def get_collection(path: str) -> Collection:
+    try:
+        return Collection(path)
+    except Exception as e:
+        print(f"Error getting collection: {e}")
+        sys.exit(1)
 
 
 # DeckId -> Deck
