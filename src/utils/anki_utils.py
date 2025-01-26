@@ -1,29 +1,33 @@
+import os
 import sys
 
+from configparser import ConfigParser, NoSectionError
 from anki.collection import Collection
-
-# Objectives:
-# - Handle collections
-# - Handle creation of decks
-# - Handle creating of notes
-# - Handle templates and card types
+from config import CONFIG_FILE_PATH
 
 
-# Path -> Collection
-# Get a Path to a anki2 file and returns a Collection.
-def get_collection(path: str) -> Collection:
+# Checks if the file "lengua.conf" exists. If so, creates a Collection,
+# otherwise, prints an error message;
+if os.path.exists(CONFIG_FILE_PATH):
     try:
-        return Collection(path)
-    except Exception as e:
-        print(f"Error getting collection: {e}")
+        config = ConfigParser()
+        config.read(CONFIG_FILE_PATH)
+
+        collection_path = config.get("collection", "path")
+
+        COLLECTION = Collection(collection_path)
+    except NoSectionError as e:
+        print(f"Config file invalid: section '{e.section}' is missing.")
         sys.exit(1)
+else:
+    print(
+        "Error: Collection is None! You must set the path to your collection.anki2 file!"
+    )
+    sys.exit(1)
 
 
-# DeckId -> Deck
-# Get a DeckId and returns a Deck whose id equals DeckId.
-# If no deck is found, then it returns a new one.
-def get_deck(collection: Collection, name: str, new: bool = False):
-    deck_id = collection.decks.id(name, new)
+def get_deck(name: str, new: bool = False):
+    deck_id = COLLECTION.decks.id(name, new)
     if new:
         return deck_id
     else:
@@ -49,7 +53,9 @@ def create_cloze_note(text: str, back_extra: str): ...
 
 
 if __name__ == "__main__":
-    col = get_collection("/home/tassio/.local/share/Anki2/Tassio/collection.anki2")
-    print(f"get_collection: {col}")
-    deck = get_deck(col, "deck test", True)
-    print(f"get_deck: {deck}")
+    ...
+# save_collection("/home/tassio/.local/share/Anki2/Tassio/collection.anki2")
+# col = get_collection("/home/tassio/.local/share/Anki2/Tassio/collection.anki2")
+# print(f"get_collection: {col}")
+# deck = get_deck(col, "deck test", True)
+# print(f"get_deck: {deck}")
