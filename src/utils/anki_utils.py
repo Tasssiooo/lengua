@@ -3,6 +3,7 @@ import sys
 
 from configparser import ConfigParser, NoSectionError
 from anki.collection import Collection
+from anki.decks import DeckId
 from config import CONFIG_FILE_PATH
 
 
@@ -59,7 +60,16 @@ def create_basic_note(front: str, back: str):
 
 # todo?
 # def create_typein_note(front: str, back: str): ...
-
-
 # todo?
 # def create_cloze_note(text: str, back_extra: str): ...
+
+
+# For my personal use, I will only use Basic types.
+# Handling other card types perhaps in the future (or fork it =T).
+def update_deck(deck_id: DeckId, fields: list[str]):
+    """
+    Updates a deck adding a new note to it.
+    """
+    front, back = fields
+    basic_note = create_basic_note(front, back)
+    COLLECTION.add_note(basic_note, deck_id)
