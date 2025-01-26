@@ -52,9 +52,9 @@ def create_basic_note(front: str, back: str):
         note["Back"] = back
 
         return note
-    else:
-        print("Error: note 'Basic' type is missing.")
-        sys.exit(1)
+
+    print("Error: note 'Basic' type is missing.")
+    sys.exit(1)
 
 
 # todo?
