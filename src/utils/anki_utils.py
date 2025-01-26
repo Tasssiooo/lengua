@@ -32,14 +32,12 @@ def get_deck(name: str, new: bool = False):
     If new is True, creates a new deck if not found.
     """
     deck_id = COLLECTION.decks.id(name, new)
-    if new:
+
+    if deck_id:
         return deck_id
-    else:
-        if deck_id:
-            return deck_id
-        else:
-            print(f'Deck "{name}" not found.')
-            sys.exit(1)
+
+    print(f'Deck "{name}" not found.')
+    sys.exit(1)
 
 
 def create_basic_note(front: str, back: str):
