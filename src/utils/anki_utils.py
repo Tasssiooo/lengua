@@ -38,24 +38,23 @@ def get_deck(name: str, new: bool = False):
             sys.exit(1)
 
 
-# Str Str -> Note
-# Get two Str arguments to generate a Basic type note; first argument is
-# Front and the second one is Back.
-def create_basic_note(front: str, back: str): ...
+def create_basic_note(front: str, back: str):
+    model = COLLECTION.models.by_name("Basic")
+
+    if model:
+        note = COLLECTION.new_note(model)
+        note["Front"] = front
+        note["Back"] = back
+
+        return note
+    else:
+        print("Error: note 'Basic' type is missing.")
+        sys.exit(1)
 
 
-# todo
-def create_typein_note(front: str, back: str): ...
+# todo?
+# def create_typein_note(front: str, back: str): ...
 
 
-# todo
-def create_cloze_note(text: str, back_extra: str): ...
-
-
-if __name__ == "__main__":
-    ...
-# save_collection("/home/tassio/.local/share/Anki2/Tassio/collection.anki2")
-# col = get_collection("/home/tassio/.local/share/Anki2/Tassio/collection.anki2")
-# print(f"get_collection: {col}")
-# deck = get_deck(col, "deck test", True)
-# print(f"get_deck: {deck}")
+# todo?
+# def create_cloze_note(text: str, back_extra: str): ...
