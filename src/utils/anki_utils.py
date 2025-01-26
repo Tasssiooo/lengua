@@ -27,6 +27,10 @@ else:
 
 
 def get_deck(name: str, new: bool = False):
+    """
+    Searches for a deck by name and returns it.
+    If new is True, creates a new deck if not found.
+    """
     deck_id = COLLECTION.decks.id(name, new)
     if new:
         return deck_id
@@ -39,6 +43,9 @@ def get_deck(name: str, new: bool = False):
 
 
 def create_basic_note(front: str, back: str):
+    """
+    Creates a 'Basic' type note and returns it.
+    """
     model = COLLECTION.models.by_name("Basic")
 
     if model:
