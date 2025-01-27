@@ -29,7 +29,7 @@ def cmd_update(args: argparse.Namespace):
 def main():
     parser = argparse.ArgumentParser(
         prog="lengua",
-        description="Creates and updates Anki decks and notes from text.",
+        description="Creates and updates Anki decks and notes from terms and expressions.",
     )
     subparsers = parser.add_subparsers(title="commands", dest="command")
 
