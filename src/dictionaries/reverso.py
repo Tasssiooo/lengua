@@ -1,4 +1,5 @@
 import sys
+import io
 
 from typing import TextIO
 from bs4 import BeautifulSoup
@@ -141,3 +142,6 @@ def reverso2anki(
 
         for content in extract(url, term, source, target):
             print(content)
+
+        if isinstance(text, io.TextIOWrapper):
+            text.close()
