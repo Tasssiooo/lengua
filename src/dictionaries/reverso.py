@@ -96,10 +96,10 @@ def get_soup(url: str):
     Gets the html text of 'url' and returns the BeautifulSoup instance of it.
     """
     try:
-        options = webdriver.FirefoxOptions()
+        options = webdriver.ChromeOptions()
         options.add_argument("--headless")
 
-        driver = webdriver.Firefox(options=options)
+        driver = webdriver.Chrome(options)
         driver.get(url)
 
         WebDriverWait(driver, 10).until(
@@ -133,13 +133,6 @@ def reverso2anki(
         url = lang["url"]
 
     for term in text:
-        # match source:
-        #     case "english":
-        #         # Ex.: https://dictionary.reverso.net/english-definition/longing#translation=brazilian
-        #         extract_eng_ver(f"{url}{term}#translation={target}")
-        #     case _:
-        #         # todo
-
         for content in extract(url, term, source, target):
             print(content)
 
