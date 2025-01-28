@@ -106,7 +106,7 @@ def get_soup(url: str):
             EC.presence_of_element_located((By.TAG_NAME, "app-translate-link"))
         )
 
-        return BeautifulSoup(driver.page_source, "html.parser")
+        return BeautifulSoup(driver.page_source, "lxml")
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)
