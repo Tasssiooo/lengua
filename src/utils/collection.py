@@ -73,3 +73,5 @@ def update_deck(deck_id: DeckId, fields: list[str]):
     front, back = fields
     basic_note = create_basic_note(front, back)
     COLLECTION.add_note(basic_note, deck_id)
+
+    print(f'"{front}" note created successfully!')
