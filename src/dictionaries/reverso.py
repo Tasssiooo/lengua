@@ -1,6 +1,8 @@
+import os
 import re
 import sys
 import io
+import pathlib
 
 from typing import TextIO
 from bs4 import BeautifulSoup
@@ -8,8 +10,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from utils import collection
-
+from utils.config import CONFIG_FILE_PATH
 
 SUPPORTED_LANGUAGES = [
     {
@@ -43,52 +44,90 @@ SUPPORTED_LANGUAGES = [
 
 
 def gen_back(content: dict[str, list[str]]):
-    # pos: part of speech
-    # dets: definitons, examples and translations
     back = []
 
+    # pos: part of speech
+    # dets: definitons, examples and translations
     for pos, dets in content.items():
         back.append(
             f"""
-            <div style="display: flex;box-sizing: border-box;">
-                <div style="display: flex;flex-direction: column;width: 100%;">
-                    <h2 style="background-color: #bddef9;align-self: flex-start;display: inline-flex;height: 24px;padding: 0 8px;justify-content: center;align-items: center;border-radius: 4px;color: #2e3c43;text-transform: lowercase;font-size: 16px;font-weight: 400;line-height: 24px;">
+            <div style="display: flex; box-sizing: border-box; width: 100%;">
+                <div style="display: flex; flex-direction: column; width: 100%;">
+                    <h2 style="background-color: #bddef9; align-self: flex-start; display: inline-flex; height: 24px;padding: 0 8px; justify-content: center;align-items: center;border-radius: 4px;color: #2e3c43;text-transform: lowercase;font-size: 16px;font-weight: 400;line-height: 24px;">
                         {pos}
                     </h2>
-                    <div style="display: flex;flex-direction: column">
-                        {[
+                    <div style="display: flex; flex-direction: column; align-items: start; width: 100%;">
+                        {"".join([
                             f"""
-                            <div style="position: relative;padding: 12px 0;border-bottom: 1px dashed #eaeef1">
-                                <div style="display: flex;color: #607d8b;line-height: 20px;flex: 1;position: relative;flex-wrap: wrap;">
-                                    <div style="font-size: 14px;line-height: 24px;height: 24px;">{det[0]}</div>
-                                    <div></div>
-                                    <div></div>
+                            <div style="position: relative; padding: 12px 0; border-bottom: 1px dashed; width: 100%;">
+                                <div style="display: flex; align-items: start; line-height: 20px; flex: 1; position: relative; flex-wrap: wrap; width: 100%;">
+                                    <div style="font-size: 14px; line-height: 24px; height: 24px; margin-right: 4px;">{det[0]}</div>
+                                    <div style="">
+                                        <div style="font-size: 16px; line-height: 24px;">
+                                            <span class="parentheses" style="font-weight: 500; white-space: nowrap; position: relative; display: inline-block;">
+                                                <i>({det[1]})</i>
+                                            </span>
+                                            <span class="sentence" style="font-weight: 500;">
+                                                {det[2]}
+                                            </span>
+                                        </div>
+                                        <div style="font-size: 14px; line-height: 20px;">
+                                            <div style="min-height: 24px; display: flex; align-items: center;">
+                                                <span>
+                                                    {det[3]}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="translations" style="margin-left: auto; display: flex; justify-content: flex-end; flex-basis: 40%; overflow: hidden; flex-wrap: wrap; max-height: 28px;">
+                                        {
+                                            "".join([
+                                                f"""
+                                                <div style="max-width: calc(100% - 6px); margin-right: 4px; white-space: nowrap;">
+                                                    <span style="max-width: 100%; overflow: hidden;">
+                                                        <span style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 4px; border-radius: 6px; color: #2e3c43; font-size: 14px; line-height: 20px; background-color: #e8f3fc;">
+                                                            {translation}
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                                """
+                                                for translation in det[4:] if det[4:]
+                                            ])
+                                        }
+                                    </div>
                                 </div>
                             </div>
                             """ 
                             for det in dets
-                        ]}
+                        ])}
                     </div>
                 </div>
             </div>
             """
         )
+    return "\n\n".join(back)
 
 
 def extract(url: str, term: str, source: str, target: str):
-    def english_version() -> dict[str, list[str]]:
+    def english_version() -> dict[str, list[str]] | None:
         """
         Content extractor for the english version of the site
         """
         # Ex.: https://dictionary.reverso.net/english-definition/longing#translation=brazilian
         soup = get_soup(f"{url}{term}#translation={target}")
 
+        if not soup:
+            print(
+                f'Error: something happened while extracting the definition of "{term}"'
+            )
+            return None
+
         div_definition_list__pos = soup.select_one(
             "app-definition-nav-tabs ~ div.definition-list__pos"
         )
 
         if not div_definition_list__pos:
-            print("Error: bad formatted page source")
+            print(f'Error: "{term}" not available in Reverso.')
             sys.exit(1)
         else:
             app_definition_pos_block = div_definition_list__pos.select(
@@ -112,22 +151,14 @@ def extract(url: str, term: str, source: str, target: str):
             for tag in div_definition_example:
                 text = tag.get_text("\n", True)
 
-                # Delete useless information
-                dets.append(re.sub(r"!\n|US\n|UK\n", "", text))
+                text = re.sub(r"!\n|US\n|UK\n", "", text)
+
+                if not re.match(r"\d.\n[\w ]+\n([\w .]+\n){0,2}([^\d]+\n?)*", text):
+                    text = "n.\n" + text
+
+                dets.append(text.split("\n"))
 
             result[part_of_speech] = dets
-
-            # for det in dets:
-            #     splited = det.split("\n")
-            #
-            #     result[part_of_speech].append(
-            #         {
-            #             "counter": splited[0],
-            #             "parentheses": splited[1],
-            #             "definition": splited[2],
-            #             ""
-            #         }
-            #     )
 
         return result
 
@@ -165,38 +196,52 @@ def get_soup(url: str):
 
         return BeautifulSoup(driver.page_source, "lxml")
     except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+        print(e)
 
 
 def reverso2anki(
     text: TextIO | list[str], deck_name: str, source: str, target: str, create: bool
 ):
-    source = source.lower()
-    target = target.lower()
+    if os.path.exists(CONFIG_FILE_PATH):
+        from utils import collection
 
-    deck = collection.get_deck(deck_name, create)
+        source = source.lower()
+        target = target.lower()
 
-    lang = find_lang(source)
+        deck = collection.get_deck(deck_name, create)
 
-    # Checks two things:
-    # 1. If 'source' is available in this dictionary;
-    # 2. If 'source' can be translated to 'target';
-    if not lang:
-        print(f"Error: {source} not available in Reverso")
-        sys.exit(1)
-    elif not target in lang["compatible_with"]:
-        print(f"Error: {source} is not compatible with {target}.")
-        sys.exit(1)
-    else:
-        url = lang["url"]
+        lang = find_lang(source)
 
-    for term in text:
-        content = extract(url, term, source, target)
+        # Checks two things:
+        # 1. If 'source' is available in this dictionary;
+        # 2. If 'source' can be translated to 'target';
+        if not lang:
+            print(f"Error: {source} not available in Reverso")
+            sys.exit(1)
+        elif not target in lang["compatible_with"]:
+            print(f"Error: {source} is not compatible with {target}.")
+            sys.exit(1)
+        else:
+            url = lang["url"]
 
-        back = gen_back(content)
+        for term in text:
+            term = term.strip().lower()
 
-        # collection.update_deck(deck, fields)
+            content = extract(url, term, source, target)
+
+            if not content:
+                if isinstance(text, io.TextIOWrapper):
+                    error_file_path = pathlib.Path(text.name).with_suffix(".errors")
+                else:
+                    error_file_path = "~/Documents/reverso.errors"
+
+                with open(error_file_path, "a") as errors:
+                    errors.write(term + "\n")
+                continue
+
+            back = gen_back(content)
+
+            collection.update_deck(deck, [term, back])
 
         if isinstance(text, io.TextIOWrapper):
             text.close()
