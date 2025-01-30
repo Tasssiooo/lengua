@@ -1,3 +1,4 @@
+import re
 import sys
 import io
 
@@ -7,6 +8,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from utils import collection
 
 
 SUPPORTED_LANGUAGES = [
@@ -40,8 +42,41 @@ SUPPORTED_LANGUAGES = [
 ]
 
 
+def gen_back(content: dict[str, list[str]]):
+    # pos: part of speech
+    # dets: definitons, examples and translations
+    back = []
+
+    for pos, dets in content.items():
+        back.append(
+            f"""
+            <div style="display: flex;box-sizing: border-box;">
+                <div style="display: flex;flex-direction: column;width: 100%;">
+                    <h2 style="background-color: #bddef9;align-self: flex-start;display: inline-flex;height: 24px;padding: 0 8px;justify-content: center;align-items: center;border-radius: 4px;color: #2e3c43;text-transform: lowercase;font-size: 16px;font-weight: 400;line-height: 24px;">
+                        {pos}
+                    </h2>
+                    <div style="display: flex;flex-direction: column">
+                        {[
+                            f"""
+                            <div style="position: relative;padding: 12px 0;border-bottom: 1px dashed #eaeef1">
+                                <div style="display: flex;color: #607d8b;line-height: 20px;flex: 1;position: relative;flex-wrap: wrap;">
+                                    <div style="font-size: 14px;line-height: 24px;height: 24px;">{det[0]}</div>
+                                    <div></div>
+                                    <div></div>
+                                </div>
+                            </div>
+                            """ 
+                            for det in dets
+                        ]}
+                    </div>
+                </div>
+            </div>
+            """
+        )
+
+
 def extract(url: str, term: str, source: str, target: str):
-    def english_version():
+    def english_version() -> dict[str, list[str]]:
         """
         Content extractor for the english version of the site
         """
@@ -60,6 +95,8 @@ def extract(url: str, term: str, source: str, target: str):
                 "app-definition-pos-block"
             )
 
+        result = {}
+
         for element in app_definition_pos_block:
             # Part of speech: verb, noun, adjective, etc.
             h2 = element.select("div.definition-pos-block > h2")
@@ -70,9 +107,29 @@ def extract(url: str, term: str, source: str, target: str):
             )
 
             part_of_speech = h2[0].get_text(strip=True)
-            dets = [tag.get_text("\n", True) for tag in div_definition_example]
+            dets = []
 
-            yield (part_of_speech, dets)
+            for tag in div_definition_example:
+                text = tag.get_text("\n", True)
+
+                # Delete useless information
+                dets.append(re.sub(r"!\n|US\n|UK\n", "", text))
+
+            result[part_of_speech] = dets
+
+            # for det in dets:
+            #     splited = det.split("\n")
+            #
+            #     result[part_of_speech].append(
+            #         {
+            #             "counter": splited[0],
+            #             "parentheses": splited[1],
+            #             "definition": splited[2],
+            #             ""
+            #         }
+            #     )
+
+        return result
 
     if source == "english":
         return english_version()
@@ -118,6 +175,8 @@ def reverso2anki(
     source = source.lower()
     target = target.lower()
 
+    deck = collection.get_deck(deck_name, create)
+
     lang = find_lang(source)
 
     # Checks two things:
@@ -133,8 +192,11 @@ def reverso2anki(
         url = lang["url"]
 
     for term in text:
-        for content in extract(url, term, source, target):
-            print(content)
+        content = extract(url, term, source, target)
+
+        back = gen_back(content)
+
+        # collection.update_deck(deck, fields)
 
         if isinstance(text, io.TextIOWrapper):
             text.close()

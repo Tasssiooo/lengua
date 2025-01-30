@@ -4,7 +4,7 @@ import sys
 from configparser import ConfigParser, NoSectionError
 from anki.collection import Collection
 from anki.decks import DeckId
-from config import CONFIG_FILE_PATH
+from .config import CONFIG_FILE_PATH
 
 
 # Checks if the file "lengua.conf" exists. If so, creates a Collection,

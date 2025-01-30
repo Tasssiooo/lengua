@@ -1,4 +1,5 @@
 import argparse
+import os
 
 from utils import config
 from dictionaries import reverso2anki
@@ -10,10 +11,10 @@ def cmd_config(args: argparse.Namespace):
 
 
 def cmd_update(args: argparse.Namespace):
-    if isinstance(args.text, str):
-        text = args.text.split("\n")
-    else:
+    if os.path.exists(args.text):
         text = open(args.text, "r")
+    else:
+        text = args.text.split("\n")
 
     match args.dictionary:
         case "cambridge":
@@ -29,7 +30,7 @@ def cmd_update(args: argparse.Namespace):
 def main():
     parser = argparse.ArgumentParser(
         prog="lengua",
-        description="Creates and updates Anki decks and notes from terms and expressions.",
+        description="Creates and updates Anki decks and notes from terms and expression.",
     )
     subparsers = parser.add_subparsers(title="commands", dest="command")
 
