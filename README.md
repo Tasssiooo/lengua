@@ -1,0 +1,1 @@
+This is just a tool I made to help myself with my Anki collection :T
