@@ -153,7 +153,7 @@ def extract(url: str, term: str, source: str, target: str):
 
                 text = re.sub(r"!\n|US\n|UK\n", "", text)
 
-                if not re.match(r"\d.\n[\w ]+\n([\w .]+\n){0,2}([^\d]+\n?)*", text):
+                if not re.match(r"\d.\n.+\n(.+\n){0,2}([^\d]+\n?)*", text):
                     text = "n.\n" + text
 
                 dets.append(text.split("\n"))
