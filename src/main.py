@@ -1,30 +1,6 @@
 import argparse
-import os
 
-from utils import config
-from dictionaries import reverso2anki
-
-
-def cmd_config(args: argparse.Namespace):
-    if args.collection:
-        config.set_collection(args.collection)
-
-
-def cmd_update(args: argparse.Namespace):
-    if os.path.exists(args.text):
-        text = open(args.text, "r")
-    else:
-        text = args.text.split("\n")
-
-    match args.dictionary:
-        case "cambridge":
-            # todo
-            ...
-        case "reverso":
-            reverso2anki(text, args.deck_name, args.source, args.target, args.create)
-        case "wiktionary":
-            # todo
-            ...
+from utils.commands import config, update
 
 
 def main():
@@ -74,9 +50,9 @@ def main():
 
     match args.command:
         case "config":
-            cmd_config(args)
+            config(args)
         case "update":
-            cmd_update(args)
+            update(args)
 
 
 if __name__ == "__main__":
