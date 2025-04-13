@@ -13,7 +13,7 @@ def update(args):
     if os.path.exists(args.text):
         text = open(args.text, "r")
     else:
-        text = args.text.split("\n")
+        text = [args.text]
 
     match args.dictionary:
         # case "cambridge":
