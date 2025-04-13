@@ -1,7 +1,7 @@
 import os
 import sys
 
-from configparser import ConfigParser, NoSectionError
+from configparser import ConfigParser, NoSectionError, NoOptionError
 from anki.collection import Collection
 from anki.decks import DeckId
 from .configurations import CONFIG_FILE_PATH
@@ -18,8 +18,14 @@ if os.path.exists(CONFIG_FILE_PATH):
 
         COLLECTION = Collection(collection_path)
     except NoSectionError as e:
-        print(f"Config file invalid: section '{e.section}' is missing.")
+        print(f"Configuration file invalid: section '{e.section}' is missing.")
         sys.exit(1)
+    except NoOptionError as e:
+        print(
+            f"Configuration file invalid: value '{e.option}' of '{e.section}' section not found."
+        )
+        sys.exit(1)
+
 else:
     print(
         "Error: Collection is None! You must set the path to your collection.anki2 file!"
