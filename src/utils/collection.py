@@ -47,21 +47,50 @@ def get_deck(name: str, new: bool = False):
     sys.exit(1)
 
 
-def create_basic_note(front: str, back: str):
-    """
-    Creates a 'Basic' type note and returns it.
-    """
-    model = COLLECTION.models.by_name("Basic")
+def get_vocabulary_model():
+    model = COLLECTION.models.by_name("Vocabulary")
 
-    if model:
-        note = COLLECTION.new_note(model)
-        note["Front"] = front
-        note["Back"] = back
+    if not model:
+        model = COLLECTION.models.new("Vocabulary")
+        template = COLLECTION.models.new_template("Vocabulary")
 
-        return note
+        template["qfmt"] = (
+            "{{Word}}\n<span id=pos>({{Part of Speech}})</span>\n</br>\n<span id=example>{{Example}}</span>"
+        )
+        template["afmt"] = (
+            "{{FrontSide}}\n<hr id=answer>\n{{Meaning}}\n</br>\n<span id=translations>{{Translations}}</span>"
+        )
 
-    print("Error: note 'Basic' type is missing.")
-    sys.exit(1)
+        model["flds"] = [
+            COLLECTION.models.new_field("Word"),
+            COLLECTION.models.new_field("Part of Speech"),
+            COLLECTION.models.new_field("Example"),
+            COLLECTION.models.new_field("Meaning"),
+            COLLECTION.models.new_field("Translations"),
+        ]
+        model["tmpls"] = [template]
+        model[
+            "css"
+        ] = """
+        .card {
+            font-family: Cantarell;
+            font-size: 20px;
+            text-align: center;
+            color: black;
+            background-color: white;
+        }
+
+        #pos {
+            font-size: 16px;
+        }
+        #example, #translations {
+            line-height: 4rem;
+        }
+        """
+
+        COLLECTION.models.add(model)
+
+    return model
 
 
 def create_vocabulary_note(
@@ -70,7 +99,7 @@ def create_vocabulary_note(
     """
     Creates a 'Vocabulary' type note and returns it.
     """
-    model = COLLECTION.models.by_name("Vocabulary")
+    model = get_vocabulary_model()
 
     if model:
         note = COLLECTION.new_note(model)
@@ -86,34 +115,25 @@ def create_vocabulary_note(
     sys.exit(1)
 
 
-# todo?
-# def create_typein_note(front: str, back: str): ...
-# todo?
-# def create_cloze_note(text: str, back_extra: str): ...
+def update_deck(deck_id: DeckId, fields_list: list[dict[str, str]]):
 
+    for fields in fields_list:
+        vocabulary_note = create_vocabulary_note(
+            fields["word"],
+            fields["part of speech"],
+            fields["example"],
+            fields["meaning"],
+            fields["translations"],
+        )
 
-# For my personal use, I will only use Basic types.
-# Handling other card types perhaps in the future (or fork it =T).
-def update_deck(deck_id: DeckId, fields: list[str]):
-    """
-    Updates a deck adding a new note to it.
-    """
-    front, back = fields
-    basic_note = create_basic_note(front, back)
-    COLLECTION.add_note(basic_note, deck_id)
+        COLLECTION.add_note(vocabulary_note, deck_id)
 
-    print(f'"{front}" note created successfully!')
-
-
-def update_vocabulary(deck_id: DeckId, term: str, term_data: dict[str, list[str]]):
-    for part_of_speech, definitions in term_data.items():
-        for definition in definitions:
-            meaning = f"<i>({definition[1]})</i> {definition[2]}"
-            example = definition[3]
-            translations = " - ".join(definition[4:])
-
-            vocabulary_note = create_vocabulary_note(
-                term, part_of_speech.casefold(), example, meaning, translations
-            )
-
-            COLLECTION.add_note(vocabulary_note, deck_id)
+        print(
+            f"""
+[status]
+    word -> {fields["word"]}
+    part_of_speech -> {fields["part of speech"]}
+    example -> {fields["example"]}
+    meaning -> {fields["meaning"]}
+    translations -> {fields["translations"]}"""
+        )
