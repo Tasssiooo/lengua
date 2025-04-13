@@ -21,7 +21,10 @@ def set_collection(collection_path: str):
     """
 
     config = ConfigParser()
-    config.add_section("collection")
+
+    if not config.has_section("collection"):
+        config.add_section("collection")
+
     config.set("collection", "path", collection_path)
 
     with open(CONFIG_FILE_PATH, "w") as lengua_conf:
