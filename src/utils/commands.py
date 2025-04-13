@@ -1,16 +1,15 @@
-import argparse
 import os
 
 from utils import configurations
 from dictionaries import reverso2anki
 
 
-def config(args: argparse.Namespace):
+def config(args):
     if args.collection:
         configurations.set_collection(args.collection)
 
 
-def update(args: argparse.Namespace):
+def update(args):
     if os.path.exists(args.text):
         text = open(args.text, "r")
     else:
