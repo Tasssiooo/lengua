@@ -39,12 +39,6 @@ def main():
     update_parser.add_argument(
         "target", metavar="<target>", help="the translation language"
     )
-    update_parser.add_argument(
-        "dictionary",
-        choices=["cambridge", "reverso", "wiktionary"],
-        metavar="<dictionary>",
-        help="Cambridge, Reverso or Wiktionary",
-    )
 
     args = parser.parse_args()
 
