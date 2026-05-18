@@ -19,25 +19,29 @@ def main():
         help="Path to 'collection.anki2'",
     )
 
-    # Update subparser
-    update_parser = subparsers.add_parser("update", help="manage decks")
-    update_parser.add_argument(
+    # Generate subparser
+    generate_parser = subparsers.add_parser(
+        "generate", help="Sets configuration for deck generation"
+    )
+    generate_parser.add_argument(
         "-c",
         "--create",
         action="store_true",
-        help="create a new deck based on <deck_name> if it doesn't exist",
+        help="creates a new deck",
     )
-    update_parser.add_argument(
-        "deck_name", metavar="<deck_name>", help="the name of the deck"
+    generate_parser.add_argument(
+        "deck_name", metavar="<deck_name>", help="the deck name"
     )
-    update_parser.add_argument(
+    generate_parser.add_argument(
         "text",
         metavar="<text>",
-        help="some type of text, could be a plain text file or a string.",
+        help="some type of text, it could be a plain text file or a string.",
     )
-    update_parser.add_argument("source", metavar="<source>", help="the text language")
-    update_parser.add_argument(
-        "target", metavar="<target>", help="the translation language"
+    generate_parser.add_argument(
+        "srclang", metavar="<srclang>", help="the text language"
+    )
+    generate_parser.add_argument(
+        "tarlang", metavar="<tarlang>", help="the translation language"
     )
 
     args = parser.parse_args()
@@ -45,7 +49,7 @@ def main():
     match args.command:
         case "config":
             config(args)
-        case "update":
+        case "generate":
             update(args)
 
 
