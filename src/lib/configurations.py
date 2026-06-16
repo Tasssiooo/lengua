@@ -23,7 +23,7 @@ def resolve_config_file_path():
     return config_file_path
 
 
-def get_collection():
+def get_config():
     global CONFIG
 
     if CONFIG is None:
@@ -39,7 +39,7 @@ def set_collection(collection_path: str):
     to the path to your 'collection.anki2' file.
     """
 
-    config = get_collection()
+    config = get_config()
     config_file_path = resolve_config_file_path()
 
     if not config.has_section("collection"):
