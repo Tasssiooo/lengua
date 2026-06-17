@@ -1,34 +1,27 @@
-import os
 import sys
 
-from configparser import ConfigParser, NoSectionError, NoOptionError
+from configparser import NoSectionError, NoOptionError
 from anki.collection import Collection
-from .configurations import CONFIG_FILE_PATH
+from .configurations import get_config
 
-# Checks if the file "lengua.conf" exists. If so, creates a Collection,
-# otherwise, prints an error message;
-if os.path.exists(CONFIG_FILE_PATH):
+_COLLECTION = None
+
+
+def get_collection() -> Collection:
+    global _COLLECTION
+
     try:
-        config = ConfigParser()
-        config.read(CONFIG_FILE_PATH)
+        if _COLLECTION is None:
+            config = get_config()
+            _COLLECTION = Collection(config.get("collection", "path"))
 
-        collection_path = config.get("collection", "path")
-
-        COLLECTION = Collection(collection_path)
+        return _COLLECTION
     except NoSectionError as e:
-        print(f"Configuration file invalid: section '{e.section}' is missing.")
-        sys.exit(1)
+        sys.exit(f"Configuration file invalid: section '{e.section}' is missing.")
     except NoOptionError as e:
-        print(
+        sys.exit(
             f"Configuration file invalid: value '{e.option}' of '{e.section}' section not found."
         )
-        sys.exit(1)
-
-else:
-    print(
-        "Error: Collection is None! You must set the path to your collection.anki2 file!"
-    )
-    sys.exit(1)
 
 
 def get_deck(name: str, new: bool = False):
@@ -36,7 +29,9 @@ def get_deck(name: str, new: bool = False):
     Searches for a deck by name and returns it.
     If new is True, creates a new deck if not found.
     """
-    deck_id = COLLECTION.decks.id(name, new)
+    collection = get_collection()
+
+    deck_id = collection.decks.id(name, new)
 
     if deck_id:
         return deck_id
@@ -49,10 +44,11 @@ def create_basic_note(front: str, back: str):
     """
     Creates a 'Basic' type note and returns it.
     """
-    model = COLLECTION.models.by_name("Basic")
+    collection = get_collection()
+    model = collection.models.by_name("Basic")
 
     if model:
-        note = COLLECTION.new_note(model)
+        note = collection.new_note(model)
         note["Front"] = front
         note["Back"] = back
 
@@ -78,11 +74,12 @@ def create_japanese_note(
     frequency: str,
     image: str,
 ):
-    model = COLLECTION.models.by_name("Japanese")
+    collection = get_collection()
+    model = collection.models.by_name("Japanese")
 
     if not model:
-        model = COLLECTION.models.new("Japanese")
-        template = COLLECTION.models.new_template("jp_tmpl")
+        model = collection.models.new("Japanese")
+        template = collection.models.new_template("jp_tmpl")
 
         template["qfmt"] = (
             '<div lang="ja">{{Word}}<div style="font-size: 20px;">{{Sentence}}</div></div>'
@@ -127,20 +124,20 @@ def create_japanese_note(
 </div>"""
 
         model["flds"] = [
-            COLLECTION.models.new_field("Word"),
-            COLLECTION.models.new_field("Word reading"),
-            COLLECTION.models.new_field("Word meaning"),
-            COLLECTION.models.new_field("Word furigana"),
-            COLLECTION.models.new_field("Word audio"),
-            COLLECTION.models.new_field("Sentence"),
-            COLLECTION.models.new_field("Sentence meaning"),
-            COLLECTION.models.new_field("Sentence furigana"),
-            COLLECTION.models.new_field("Sentence audio"),
-            COLLECTION.models.new_field("Notes"),
-            COLLECTION.models.new_field("Pitch accent"),
-            COLLECTION.models.new_field("Pitch accent notes"),
-            COLLECTION.models.new_field("Frequency"),
-            COLLECTION.models.new_field("Image"),
+            collection.models.new_field("Word"),
+            collection.models.new_field("Word reading"),
+            collection.models.new_field("Word meaning"),
+            collection.models.new_field("Word furigana"),
+            collection.models.new_field("Word audio"),
+            collection.models.new_field("Sentence"),
+            collection.models.new_field("Sentence meaning"),
+            collection.models.new_field("Sentence furigana"),
+            collection.models.new_field("Sentence audio"),
+            collection.models.new_field("Notes"),
+            collection.models.new_field("Pitch accent"),
+            collection.models.new_field("Pitch accent notes"),
+            collection.models.new_field("Frequency"),
+            collection.models.new_field("Image"),
         ]
         model["tmpls"] = [template]
         model["css"] = """.card {
@@ -161,9 +158,9 @@ max-width: 50vw;
 /* This part defines the bold color. */
 b{color: #5586cd}"""
 
-        COLLECTION.models.add(model)
+        collection.models.add(model)
 
-    note = COLLECTION.new_note(model)
+    note = collection.new_note(model)
     note["Word"] = word
     note["Word reading"] = word_reading
     note["Word meaning"] = word_meaning
