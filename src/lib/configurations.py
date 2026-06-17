@@ -4,7 +4,7 @@ import sys
 from configparser import ConfigParser
 from pathlib import Path
 
-CONFIG = None
+_CONFIG = None
 
 
 def resolve_config_file_path():
@@ -23,14 +23,14 @@ def resolve_config_file_path():
     return config_file_path
 
 
-def get_config():
-    global CONFIG
+def get_config() -> ConfigParser:
+    global _CONFIG
 
-    if CONFIG is None:
-        CONFIG = ConfigParser()
-        CONFIG.read(resolve_config_file_path(), encoding="utf-8")
+    if _CONFIG is None:
+        _CONFIG = ConfigParser()
+        _CONFIG.read(resolve_config_file_path(), encoding="utf-8")
 
-    return CONFIG
+    return _CONFIG
 
 
 def set_collection(collection_path: str):
