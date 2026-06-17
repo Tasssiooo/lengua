@@ -36,8 +36,7 @@ def get_deck(name: str, new: bool = False):
     if deck_id:
         return deck_id
 
-    print(f'Deck "{name}" not found.')
-    sys.exit(1)
+    sys.exit(f'Deck "{name}" not found.')
 
 
 def create_basic_note(front: str, back: str):
@@ -54,8 +53,7 @@ def create_basic_note(front: str, back: str):
 
         return note
 
-    print("Error: note 'Basic' type is missing.")
-    sys.exit(1)
+    sys.exit("Error: note 'Basic' type is missing.")
 
 
 def create_japanese_note(
