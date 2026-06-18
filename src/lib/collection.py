@@ -24,7 +24,7 @@ def get_collection() -> Collection:
         )
 
 
-def get_deck(name: str, new: bool = False):
+def get_deck(name: str, new: bool = False) -> int:
     """
     Searches for a deck by name and returns it.
     If new is True, creates a new deck if not found.
@@ -174,4 +174,4 @@ b{color: #5586cd}"""
     note["Frequency"] = frequency
     note["Image"] = image
 
-    return model
+    return note
