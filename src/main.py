@@ -1,9 +1,10 @@
 import argparse
+import sys
 
-from utils.commands import config, update
+from lib.commands import config, generate
 
 
-def main():
+def main(argv: list[str]):
     parser = argparse.ArgumentParser(
         prog="lengua",
         description="Creates and updates Anki decks and notes from terms and expression.",
@@ -44,14 +45,14 @@ def main():
         "tarlang", metavar="<tarlang>", help="the translation language"
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(args=argv)
 
     match args.command:
         case "config":
             config(args)
         case "generate":
-            update(args)
+            generate(args)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
