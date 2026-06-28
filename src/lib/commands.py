@@ -1,7 +1,7 @@
 import os
 import sys
 from lib.ai import get_terms_data
-from lib.languages import create_japanese_flashcards
+from lib.languages import create_japanese_flashcard, create_general_flashcard
 from lib.collection import get_collection, get_deck
 from lib.configurations import set_collection
 
@@ -18,11 +18,12 @@ def generate(args):
         with open(args.text, "r", encoding="utf-8") as text_file:
             input = text_file.read()
 
-    terms_data = get_terms_data(input)
+    terms_data = get_terms_data(input, args.klangs, args.llangs)
     collection = get_collection()
     deck = get_deck(args.deck_name, args.create)
 
-    match args.srclang:
-        case "jp":
-            create_japanese_flashcards(terms_data, deck)
-            sys.exit(0)
+    for term_data in terms_data:
+        if "furigana" in term_data:
+            create_japanese_flashcard(term_data, deck)
+        else:
+            create_general_flashcard(term_data, deck)
