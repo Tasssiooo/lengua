@@ -1,8 +1,7 @@
 import os
-import sys
 from lib.ai import get_terms_data
 from lib.languages import create_japanese_flashcard, create_general_flashcard
-from lib.collection import get_collection, get_deck
+from lib.collection import get_deck
 from lib.configurations import set_collection
 
 
@@ -19,7 +18,6 @@ def generate(args):
             input = text_file.read()
 
     terms_data = get_terms_data(input, args.klangs, args.llangs)
-    collection = get_collection()
     deck = get_deck(args.deck_name, args.create)
 
     for term_data in terms_data:
