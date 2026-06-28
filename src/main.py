@@ -39,10 +39,12 @@ def main(argv: list[str]):
         help="some type of text, it could be a plain text file or a string.",
     )
     generate_parser.add_argument(
-        "srclang", metavar="<srclang>", help="the text language"
+        "--klangs",
+        nargs="+",
+        help="The languages you know. The first language will be considered your native language.",
     )
     generate_parser.add_argument(
-        "tarlang", metavar="<tarlang>", help="the translation language"
+        "--llangs", nargs="+", help="The languages you want to learn."
     )
 
     args = parser.parse_args(args=argv)
