@@ -56,6 +56,87 @@ def create_basic_note(front: str, back: str):
     sys.exit("Error: note 'Basic' type is missing.")
 
 
+def create_general_note(
+    word: str,
+    word_meaning: str,
+    pronunciation: str,
+    sentence: str,
+    sentence_meaning: str,
+    notes: str,
+):
+    collection = get_collection()
+    model = collection.models.by_name("General")
+    fields = (
+        ("Word", word),
+        ("Word meaning", word_meaning),
+        ("Pronunciation", pronunciation),
+        ("Sentence", sentence),
+        ("Sentence meaning", sentence_meaning),
+        ("Notes", notes),
+    )
+
+    if not model:
+        model = collection.models.new("General")
+        template = collection.models.new_template("gn_tmpl")
+
+        template["qfmt"] = """<div>
+	{{Word}}
+	{{#Pronunciation}}
+		<div style='font-size: 24px'>{{Pronunciation}}</div>
+	{{/Pronunciation}}
+	<div style="font-size: 16px;">{{Sentence}}</div>
+</div>"""
+        template["afmt"] = """<div>
+	{{Word}}
+	{{#Pronunciation}}
+		<div style='font-size: 24px'>{{Pronunciation}}</div>
+	{{/Pronunciation}}
+	<div style='font-size: 16px; padding-bottom:20px'>
+		{{Word meaning}}
+	</div>
+	<div style='font-size: 16px; padding-bottom:5px'>
+		{{Sentence}}
+	</div>
+	<div style='font-size: 16px; padding-bottom:10px'>
+		{{Sentence meaning}}
+	</div>
+	<br>
+	{{#Notes}}
+		<div style="font-size: 20px; padding-top:12px">
+			Note: {{Notes}}
+		</div>
+	{{/Notes}}
+</div>"""
+        model["flds"] = [
+            collection.models.new_field(field_name) for field_name, _ in fields
+        ]
+        model["tmpls"] = [template]
+        model["css"] = """.card {
+ font-family: 'Noto Sans', sans-serif;
+ font-size: 44px;
+ text-align: center;
+}
+
+img {
+max-width: 300px;
+max-height: 250px;
+}
+
+.mobile img {
+max-width: 50vw;
+}
+
+/* This part defines the bold color. */
+b{color: #5586cd}"""
+
+        collection.models.add(model)
+
+    note = collection.new_note(model)
+    for field_name, field_value in fields:
+        note[field_name] = field_value if field_value != "-" else ""
+    return note
+
+
 def create_japanese_note(
     word: str,
     word_reading: str,
