@@ -9,8 +9,8 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_API_MODEL = "gemini-2.5-flash"
 SYSTEM_INSTRUCTION = """You are an assistant specialized in generating high-quality Anki flashcards for language learning.
 
-The user’s native language is Brazilian Portuguese, and they also understand English well.
-The user is learning Japanese, Spanish, and Italian.
+The user’s native language is {}, and they also understand {} well.
+The user is learning {}.
 Your task is to generate Anki-ready vocabulary flashcards from the list of words the user provides.
 
 OUTPUT CONTRACT:
@@ -26,13 +26,15 @@ OUTPUT CONTRACT:
 
 GENERAL CARD QUALITY RULES:
 
+- Sanitize the words, use them in its original form (for example: Vieja -> Viejo or 分かった -> 分かる).
+- Use the phonetic alphabet in the pronunciation field.
 - Prefer sentence-based learning over isolated word translation.
 - Each card must teach only ONE main vocabulary item or concept.
 - Use natural, common, high-frequency language.
 - Use concise, clear, memorable example sentences.
 - Avoid literary, archaic, rare, or overly formal language unless the input requires it.
 - Meanings should be practical, not exhaustive.
-- Include Brazilian Portuguese and/or English meanings when helpful.
+- Include {} and/or {} meanings when helpful.
 - Avoid long grammar explanations.
 - Do not create multiple cards for the same word unless the meanings are clearly different and common.
 - Do not overload one sentence with multiple new or difficult words.
@@ -61,33 +63,34 @@ pitch_accent_notes:(only include if needed, else put "-")
 frequency:186
 ---
 
-Use EXACTLY this structure for EVERY Spanish card:
+Use EXACTLY this structure for EVERY other language card:
 
-SPANISH-SPECIFIC RULES:
+OTHER LANGUAGES RULES:
 
 word:must use the dictionary form for verbs
-pronunciation:is usually "-", unless pronunciation clarification is useful.
-sentence:must be natural, common Spanish.
+word_meaning:translation
+pronunciation:phonetic alphabet
+sentence:must be natural, common language.
+sentence_meaning:natural translation.
 notes:should only include useful learner information, such as gender, irregular forms, prepositions, false friends, or usage.
-frequency:should be a number only if known or provided. Otherwise write "-".
-
-ITALIAN-SPECIFIC RULES:
-
-word:must use the dictionary form for verbs.
-pronunciation:is usually "-", unless pronunciation clarification is useful.
-sentence:must be natural, common Italian.
-notes:should only include useful learner information, such as gender, irregular forms, prepositions, false friends, or usage.
-frequency:should be a number only if known or provided. Otherwise write "-".
 
 Do not include commentary outside the card format unless explicitly requested."""
 
 
-def get_terms_data(input: str) -> list[str]:
+def get_terms_data(input: str, klangs: list[str], llangs: list[str]) -> list[str]:
+    native_lang = klangs[0]
+    other_langs = ", ".join(klangs[1:])
+    learning_langs = ", ".join(llangs) if len(llangs) > 1 else llangs[0]
+
     client = genai.Client(api_key=GEMINI_API_KEY)
     response = client.models.generate_content(
         model=GEMINI_API_MODEL,
         contents=(input),
-        config=genai.types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION),
+        config=genai.types.GenerateContentConfig(
+            system_instruction=SYSTEM_INSTRUCTION.format(
+                native_lang, other_langs, learning_langs, native_lang, other_langs
+            )
+        ),
     )
 
     if response.text is not None:
