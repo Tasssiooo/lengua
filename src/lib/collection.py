@@ -63,6 +63,7 @@ def create_general_note(
     sentence: str,
     sentence_meaning: str,
     notes: str,
+    lang: str,
 ):
     collection = get_collection()
     model = collection.models.by_name("General")
@@ -134,6 +135,7 @@ b{color: #5586cd}"""
     note = collection.new_note(model)
     for field_name, field_value in fields:
         note[field_name] = field_value if field_value != "-" else ""
+    note.add_tag(lang)
     return note
 
 
@@ -254,5 +256,6 @@ b{color: #5586cd}"""
     note["Pitch accent notes"] = pitch_accent_notes
     note["Frequency"] = frequency
     note["Image"] = image
+    note.add_tag("日本語")
 
     return note
