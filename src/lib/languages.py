@@ -1,7 +1,7 @@
 from lib.collection import get_collection, create_japanese_note, create_general_note
 
 
-def create_japanese_flashcard(term_data: str, deck: int) -> None:
+def create_japanese_flashcard(term_data: str, deck) -> None:
     fields = dict([field.split(":", 1) for field in term_data.split("\n")])
 
     note = create_japanese_note(
@@ -30,7 +30,7 @@ def create_japanese_flashcard(term_data: str, deck: int) -> None:
     print(f'Japanese note "{note_name}" added to deck "{deck_name}".')
 
 
-def create_general_flashcard(term_data: str, deck: int):
+def create_general_flashcard(term_data: str, deck):
     fields = dict([field.split(":", 1) for field in term_data.strip().split("\n")])
 
     note = create_general_note(
@@ -40,6 +40,7 @@ def create_general_flashcard(term_data: str, deck: int):
         sentence=fields["sentence"],
         sentence_meaning=fields["sentence_meaning"],
         notes=fields["notes"],
+        lang=fields["lang"],
     )
 
     collection = get_collection()
@@ -47,5 +48,6 @@ def create_general_flashcard(term_data: str, deck: int):
 
     note_name = fields["word"]
     deck_name = collection.decks.name(deck)
+    lang_name = fields["lang"]
 
-    print(f'Other language note "{note_name}" added to deck "{deck_name}"')
+    print(f'{lang_name} language note "{note_name}" added to deck "{deck_name}"')
