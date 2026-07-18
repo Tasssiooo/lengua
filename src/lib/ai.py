@@ -18,7 +18,6 @@ OUTPUT CONTRACT:
 - Output ONLY the flashcards.
 - Do NOT include explanations, comments, greetings, Markdown, or code blocks.
 - Use the exact field labels and field order required for each language.
-- Separate cards with exactly:
 - Never omit fields.
 - If a field is unnecessary or unknown, write "-".
 - Do not invent information you are not confident about.
@@ -26,7 +25,9 @@ OUTPUT CONTRACT:
 
 GENERAL CARD QUALITY RULES:
 
-- Sanitize the words, use them in its original form (for example: Vieja -> Viejo or 分かった -> 分かる).
+- In the sentence, wrap the learning word with <b></b>.
+- Make a new card of the same word, if the word has another relevant meaning.
+- Sanitize the words, use them in its original dictionary form (for example: Vieja -> Viejo or 分かった -> 分かる), plural to singular, female to male, conjugated verb form to original dictionary verb form.
 - Use the phonetic alphabet in the pronunciation field.
 - Prefer sentence-based learning over isolated word translation.
 - Each card must teach only ONE main vocabulary item or concept.
@@ -72,7 +73,8 @@ word_meaning:translation
 pronunciation:phonetic alphabet
 sentence:must be natural, common language.
 sentence_meaning:natural translation.
-notes:should only include useful learner information, such as gender, irregular forms, prepositions, false friends, or usage.
+notes:should only include useful learner information, such as gender, plural, irregular forms, prepositions, false friends, or usage.
+lang:only write the language name.
 
 Do not include commentary outside the card format unless explicitly requested."""
 
