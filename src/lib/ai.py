@@ -1,101 +1,57 @@
 import os
-import sys
 from google import genai
 from dotenv import load_dotenv
+from pydantic import BaseModel, Field
+from typing import List, Optional
 
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_API_MODEL = "gemini-2.5-flash"
+GEMINI_API_MODEL = os.getenv("GEMINI_API_MODEL")
 SYSTEM_INSTRUCTION = """You are an assistant specialized in generating high-quality Anki flashcards for language learning.
 
-The user’s native language is {}, and they also understand {} well.
-The user is learning {}.
+The user's native language is portuguese, and he also speaks english, spanish and italian.
 Your task is to generate Anki-ready vocabulary flashcards from the list of words the user provides.
-
-OUTPUT CONTRACT:
-
-- Output ONLY the flashcards.
-- Do NOT include explanations, comments, greetings, Markdown, or code blocks.
-- Use the exact field labels and field order required for each language.
-- Never omit fields.
-- If a field is unnecessary or unknown, write "-".
-- Do not invent information you are not confident about.
-- HTML is allowed only inside field values where explicitly required, especially pitch_accent.
-
-GENERAL CARD QUALITY RULES:
-
-- In the sentence, wrap the learning word with <b></b>.
-- Make a new card of the same word, if the word has another relevant meaning.
-- Sanitize the words, use them in its original dictionary form (for example: Vieja -> Viejo or 分かった -> 分かる), plural to singular, female to male, conjugated verb form to original dictionary verb form.
-- Use the phonetic alphabet in the pronunciation field.
-- Prefer sentence-based learning over isolated word translation.
-- Each card must teach only ONE main vocabulary item or concept.
-- Use natural, common, high-frequency language.
-- Use concise, clear, memorable example sentences.
-- Avoid literary, archaic, rare, or overly formal language unless the input requires it.
-- Meanings should be practical, not exhaustive.
-- Include {} and/or {} meanings when helpful.
-- Avoid long grammar explanations.
-- Do not create multiple cards for the same word unless the meanings are clearly different and common.
-- Do not overload one sentence with multiple new or difficult words.
-- Use exactly the labels shown for the relevant language.
-- Never reorder fields.
-- Never skip fields.
-- Empty, unnecessary, or unknown fields must be "-".
-- Never use Markdown.
-- Never use code blocks.
-- Never include comments outside the cards.
-- Use "---" as the only separator between cards.
-- Do not add extra blank lines unless they are part of the structure.
-
-Use EXACTLY this structure for EVERY japanese card:
-
-word:好き
-word_reading:すき
-word_meaning:like,fond of
-word_furigana:好[す]き
-sentence:私はワインが好きです。
-sentence_meaning:I like wine.
-sentence_furigana:私[わたし]はワインが好[す]きです。
-notes:(only include if needed, else put "-")
-pitch_accent:<span style="color: royalblue;">ス</span><span style="display:inline-block;position:relative;padding-right:0.1em;margin-right:0.1em;"><span style="display:inline;">キ</span><span style="border-color:currentColor;display:block;user-select:none;pointer-events:none;position:absolute;top:0.1em;left:0;right:0;height:0;border-top-width:0.1em;border-top-style:solid;right:-0.1em;height:0.4em;border-right-width:0.1em;border-right-style:solid;"></span></span>
-pitch_accent_notes:(only include if needed, else put "-")
-frequency:186
----
-
-Use EXACTLY this structure for EVERY other language card:
-
-OTHER LANGUAGES RULES:
-
-word:must use the dictionary form for verbs
-word_meaning:translation
-pronunciation:phonetic alphabet
-sentence:must be natural, common language.
-sentence_meaning:natural translation.
-notes:should only include useful learner information, such as gender, plural, irregular forms, prepositions, false friends, or usage.
-lang:only write the language name.
-
-Do not include commentary outside the card format unless explicitly requested."""
+Focus on portuguese for the translations, but if you find a more meaningful word in any of the other languages, feel free use them."""
 
 
-def get_terms_data(input: str, klangs: list[str], llangs: list[str]) -> list[str]:
-    native_lang = klangs[0]
-    other_langs = ", ".join(klangs[1:])
-    learning_langs = ", ".join(llangs) if len(llangs) > 1 else llangs[0]
-
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    response = client.models.generate_content(
-        model=GEMINI_API_MODEL,
-        contents=(input),
-        config=genai.types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTION.format(
-                native_lang, other_langs, learning_langs, native_lang, other_langs
-            )
-        ),
+class CardStruct(BaseModel):
+    word: str = Field(description="The dictionary form of the word.")
+    word_meaning: str = Field(description="The translated word.")
+    # ¡JAPANESE ONLY!
+    word_reading: Optional[str] = Field(
+        description="If it's japanese vocabulary: the word reading in hiragana."
+    )
+    sentence: str = Field(description="An example sentence of how the word is used.")
+    # ¡JAPANESE ONLY!
+    sentence_furigana: Optional[str] = Field(
+        description="If it's japanese vocabulary: the same example sentence with furigana."
+    )
+    sentence_meaning: str = Field(description="The translated example sentence.")
+    notes: Optional[str] = Field(
+        description="Some pertinent information about the word if there is any."
     )
 
-    if response.text is not None:
-        return response.text.strip().split("\n---\n")
 
-    sys.exit(f"Error: for some reason the AI have returned 'None'.")
+class Cards(BaseModel):
+    cards: List[CardStruct]
+
+
+def get_terms_data(input: str) -> list[dict[str, str]]:
+    client = genai.Client(api_key=GEMINI_API_KEY)
+
+    interaction = client.interactions.create(
+        model=GEMINI_API_MODEL,
+        input=input,
+        response_format={
+            "type": "text",
+            "mime_type": "application/json",
+            "schema": Cards.model_json_schema(),
+        },
+    )
+
+    cards = Cards.model_validate_json(interaction.output_text).model_dump()
+
+    return cards["cards"]
+
+    # sys.exit(f"Error: for some reason the AI have returned 'None'.")
