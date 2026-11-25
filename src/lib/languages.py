@@ -30,24 +30,22 @@ def create_japanese_flashcard(term_data: str, deck) -> None:
     print(f'Japanese note "{note_name}" added to deck "{deck_name}".')
 
 
-def create_general_flashcard(term_data: str, deck):
-    fields = dict([field.split(":", 1) for field in term_data.strip().split("\n")])
-
+def create_general_flashcard(term_data: dict[str, str], deck, lang: str):
     note = create_general_note(
-        word=fields["word"],
-        word_meaning=fields["word_meaning"],
-        pronunciation=fields["pronunciation"],
-        sentence=fields["sentence"],
-        sentence_meaning=fields["sentence_meaning"],
-        notes=fields["notes"],
-        lang=fields["lang"],
+        word=term_data["word"],
+        word_meaning=term_data["word_meaning"],
+        ipa=term_data.get("ipa", ""),
+        sentence=term_data["sentence"],
+        sentence_meaning=term_data["sentence_meaning"],
+        notes=term_data["notes"] or "",
+        lang=lang,
     )
 
     collection = get_collection()
     collection.add_note(note, deck)
 
-    note_name = fields["word"]
+    note_name = lang
     deck_name = collection.decks.name(deck)
-    lang_name = fields["lang"]
+    lang_name = lang
 
     print(f'{lang_name} language note "{note_name}" added to deck "{deck_name}"')

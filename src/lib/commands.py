@@ -17,11 +17,13 @@ def generate(args):
         with open(args.text, "r", encoding="utf-8") as text_file:
             input = text_file.read()
 
-    terms_data = get_terms_data(input, args.klangs, args.llangs)
+    lang = "it"
+
+    terms_data = get_terms_data(input, lang)
     deck = get_deck(args.deck_name, args.create)
 
     for term_data in terms_data:
-        if "furigana" in term_data:
+        """if "furigana" in term_data:
             create_japanese_flashcard(term_data, deck)
-        else:
-            create_general_flashcard(term_data, deck)
+        else:"""
+        create_general_flashcard(term_data, deck, lang)

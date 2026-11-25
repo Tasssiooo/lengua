@@ -1,10 +1,13 @@
 import sys
 
+from string import Template
 from configparser import NoSectionError, NoOptionError
 from anki.collection import Collection
 from .configurations import get_config
 
 _COLLECTION = None
+
+TTS_VOICES = {"en": "en_US", "it": "it_IT", "es": "es_ES", "ja": "ja_JP"}
 
 
 def get_collection() -> Collection:
@@ -56,81 +59,96 @@ def create_basic_note(front: str, back: str):
     sys.exit("Error: note 'Basic' type is missing.")
 
 
+def get_model(lang: str):
+    fields = [
+        "Word",
+        "IPA",
+        "Word meaning",
+        "Sentence",
+        "Sentence meaning",
+        "Notes",
+    ]
+
+    collection = get_collection()
+    model = collection.models.by_name(f"lengua_{lang}")
+
+    if not model:
+        model = collection.models.new(f"lengua_{lang}")
+        template = collection.models.new_template(f"lengua_{lang}_tmpl")
+
+        template["qfmt"] = """<div>
+            {{Word}}
+            {{#IPA}}
+                <div style='font-size: 24px'>{{IPA}}</div>
+            {{/IPA}}
+            <div style="font-size: 16px;">{{Sentence}}</div>
+        </div>"""
+        template["afmt"] = Template("""<div>
+            {{Word}}</br>
+            {{tts $voice:Word }}{{tts $voice:Sentence}}
+            {{#IPA}}
+                <div style='font-size: 24px'>{{IPA}}</div>
+            {{/IPA}}
+            <div style='font-size: 16px; padding-bottom:20px'>
+                {{Word meaning}}
+            </div>
+            <div style='font-size: 16px; padding-bottom:5px'>
+                {{Sentence}}
+            </div>
+            <div style='font-size: 16px; padding-bottom:10px'>
+                {{Sentence meaning}}
+            </div>
+            <br>
+            {{#Notes}}
+                <div style="font-size: 20px; padding-top:12px">
+                    Note: {{Notes}}
+                </div>
+            {{/Notes}}
+        </div>""").substitute(voice=TTS_VOICES[lang])
+        model["flds"] = [collection.models.new_field(field) for field in fields]
+        model["tmpls"] = [template]
+        model["css"] = """.card {
+         font-family: 'Noto Sans', sans-serif;
+         font-size: 44px;
+         text-align: center;
+        }
+        
+        img {
+        max-width: 300px;
+        max-height: 250px;
+        }
+        
+        .mobile img {
+        max-width: 50vw;
+        }
+        
+        /* This part defines the bold color. */
+        b{color: #5586cd}"""
+
+        collection.models.add(model)
+
+    return model
+
+
 def create_general_note(
     word: str,
     word_meaning: str,
-    pronunciation: str,
+    ipa: str,
     sentence: str,
     sentence_meaning: str,
     notes: str,
     lang: str,
 ):
     collection = get_collection()
-    model = collection.models.by_name("General")
+    model = get_model(lang)
     fields = (
         ("Word", word),
+        ("IPA", ipa),
         ("Word meaning", word_meaning),
-        ("Pronunciation", pronunciation),
         ("Sentence", sentence),
         ("Sentence meaning", sentence_meaning),
         ("Notes", notes),
     )
-
-    if not model:
-        model = collection.models.new("General")
-        template = collection.models.new_template("gn_tmpl")
-
-        template["qfmt"] = """<div>
-	{{Word}}
-	{{#Pronunciation}}
-		<div style='font-size: 24px'>{{Pronunciation}}</div>
-	{{/Pronunciation}}
-	<div style="font-size: 16px;">{{Sentence}}</div>
-</div>"""
-        template["afmt"] = """<div>
-	{{Word}}
-	{{#Pronunciation}}
-		<div style='font-size: 24px'>{{Pronunciation}}</div>
-	{{/Pronunciation}}
-	<div style='font-size: 16px; padding-bottom:20px'>
-		{{Word meaning}}
-	</div>
-	<div style='font-size: 16px; padding-bottom:5px'>
-		{{Sentence}}
-	</div>
-	<div style='font-size: 16px; padding-bottom:10px'>
-		{{Sentence meaning}}
-	</div>
-	<br>
-	{{#Notes}}
-		<div style="font-size: 20px; padding-top:12px">
-			Note: {{Notes}}
-		</div>
-	{{/Notes}}
-</div>"""
-        model["flds"] = [
-            collection.models.new_field(field_name) for field_name, _ in fields
-        ]
-        model["tmpls"] = [template]
-        model["css"] = """.card {
- font-family: 'Noto Sans', sans-serif;
- font-size: 44px;
- text-align: center;
-}
-
-img {
-max-width: 300px;
-max-height: 250px;
-}
-
-.mobile img {
-max-width: 50vw;
-}
-
-/* This part defines the bold color. */
-b{color: #5586cd}"""
-
-        collection.models.add(model)
 
     note = collection.new_note(model)
     for field_name, field_value in fields:
